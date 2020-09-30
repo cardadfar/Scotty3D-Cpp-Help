@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>C++ Reference</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+    <style>
+
+        body {
+          background-color: #ebebeb;
+          margin: 0;
+          font-family: Arial;
+          line-height: 25px;
+        }
+
+        .subtitle {
+            font-size: 22px;
+        }
+
+        a {
+            display: block;
+            margin-top: 10px;
+            margin-left: 10px;
+        }
+
+        pre {
+          background-color: #ebebeb;
+          padding: 10px;
+          margin: 0;
+          margin-top: 10px;
+          font-size: 14px;
+          word-wrap: break-word;
+        }
+
+        cmt {
+            color: green;
+        }
+
+        val {
+            background-color: #ebebeb;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 5px;
+        }
+
+        .file {
+            background-color: #dbdbdb;
+            padding: 2px;
+            padding-left: 10px;
+            padding-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .block {
+            width:70%; 
+            margin-left: calc(15% - 20px); 
+            background-color: white; 
+            padding-top: 30px; 
+            padding-left: 20px; 
+            padding-right: 20px; 
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+    </style>
+
+    <div class=block>
+
+    
+    <div class=subtitle>Computer Graphics: A Programmers Perspective</div>
+    <p>
+        C++ Tutorial
+    </p>
+
+    </div>
+
+    <div class=block>
+
+
+    <div class=subtitle>Table Of Contents</div>
+
+    <a href=#background>Background</a>
+    <a href=#classes>Classes</a>
+    <a href=#templates>Templates</a>
+    <a href=#iterators>Iterators</a>
+    <a href=#auto>Auto</a>
+    <a href=#const>Const</a>
+    <a href=#static>Static</a>
+    <a href=#virtual>Virtual</a>
+    <a href=#namespace>Namespace</a>
+    <a href=#datatypes>Datatype</a>
+    <a href=#allocating>Allocating/Freeing</a>
+    <a href=#references>References</a>
+
+    </div>
+
+    <div class=block>
+
+    
+    <div class=subtitle id=background>Background</div>
+    <p>
+        Welcome to the wonderful world of C++. Regardless of your destination in life, a working knowledge of C++ sytntax and programming is essential for any Computer Graphics role in industry or research. Here we'll be teaching you the C++ stylings and syntax you're likely to come across when working in Scotty 3D.<br><br>
+
+        As always, if there are any concepts you are unsure about, come to OH or post on piazza. Ask when in doubt!
+
+    </p>
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=classes>Classes</div>
+    <p>
+        Classes in C++ are defined with a class name and function/variables definitions, which can be marked with one of three access specifiers.
+
+        <val>public:</val> values are accessible outside the class.<br>
+        <val>private:</val> values are not accessible outside classes and can only be accessed inside class functions.<br>
+        <val>protected:</val> values are private except to other classes that are derived from the class.
+
+        <pre>
+class A {
+public:
+    int x;
+private:
+    int y;
+protected:
+    int z:
+};
+class B: public A {
+    void test1() {
+        return x + z; <cmt>// works: B has access to public and protected</cmt>
+    }
+    void test2() {
+        return y;     <cmt>// fails: B doesn't have access to private</cmt>
+    }
+}
+        </pre>
+        <div class=file></div>
+
+        In the above case, class <val>B</val> is a derived class of <val>A</val>. We used the <val>public</val> access specifier when deriving <val>B</val> from <val>A</val> to show that inhereted values of <val>A</val> are made public for <val>B</val>. We can also derive another class <val>C</val> derived from a <val>private</val> instance of <val>A</val>, treating all inhereted values as private. <br><br>
+
+        <val>test1()</val> is able to execute because <val>public</val> and <val>protected</val> values of the base class <val>A</val> are visible to the derived class <val>B</val>. <val>test2()</val> fails because a derived class does not have access to <val>private</val> values of a base class. To fix this, we can declare <val>B</val> as a <val>friend class</val> of <val>A</val>. Classes trust friends with their private values. 
+
+<pre>
+class A {
+public:
+    int x;
+private:
+    int y;
+    friend class B;  <cmt>// specify B is a friend class of A</cmt>
+protected:
+    int z:
+};
+class B: public A {
+    void test1() {
+        return x + z; <cmt>// works: B has access to public and protected</cmt>
+    }
+    void test2() {
+        return y;     <cmt>// works: B is a friend class and can access private A values</cmt>
+    }
+}
+        </pre>
+        <div class=file></div>
+
+        In Scotty3D, our classes obey these access patterns. Below we have the <val>Vertex</val> class.
+
+        <pre>
+class Vertex {
+public:
+
+    HalfedgeRef& halfedge() {return _halfedge;}
+    HalfedgeCRef halfedge() const {return _halfedge;}
+
+    bool on_boundary() const;
+    unsigned int degree() const;
+    Vec3 normal() const;
+    Vec3 center() const;
+    Vec3 neighborhood_center() const;
+    unsigned int id() const {return _id;}
+
+    Vec3 pos;
+
+private:
+    Vertex(unsigned int id) : _id(id) {}
+    Vec3 new_pos;
+    bool is_new = false;
+    unsigned int _id = 0;
+    HalfedgeRef _halfedge;
+    friend class Halfedge_Mesh;
+};
+        </pre>
+        <div class=file>halfedge.h</div>
+
+        Now lets try editing some of the values of the <val>Vertex</val> class. Some features we can edit directly without using a class function, but other features are private and cannot be edited.<br><br>
+
+        On a side-note, notice how the <val>Vertex</val> constructor is a <val>private</val> field. This is because in Scotty3D, we do not want just anyone creating <val>Vertex</val> objects, so we declare the constructor as <val>private</val> and give only certain classes access to create <val>Vertex</val> objects using the <val>friend class</val> specifier. In the code below, we will assume that we have a <val>vertexList</val> we can access <val>Vertex</val> objects from.
+
+        <pre>
+Vertex *c = vertexList[i];        
+c->pos = Vec3(1.f,0.f,0.f);       <cmt>// works: public variable</cmt>
+c->new_pos = Vec3(1.f,0.f,0.f);   <cmt>// fails: private variable</cmt>
+        </pre>
+        <div class=file></div>
+
+        So how do we edit <val>new_pos</val>? Classes can inheret attributes from other classes, gaining access to <val>public</val> and <val>private</val> values in those classes. For example, the <val>Halfedge_Mesh</val> class is built using <val>Vertiex</val>, <val>Edge</val>, <val>Face</val>, and <val>Halfedge</val>, so it makes sense that we would want to modify both <val>private</val> and <val>public</val> values from these classes using functions from our <val>Halfedge_Mesh</val> class. Like our previous example, we can declare <val>Halfedge_Mesh</val> as a <val>friend class</val> in the <val>Vertex</val> class.
+
+        <pre>
+class Vertex {
+...
+
+private:
+    ...
+    friend class Halfedge_Mesh; <cmt>// we give the Halfedge_Mesh access to private values</cmt>
+};
+
+class Halfedge_Mesh {
+public:
+    class Vertex; <cmt>// access to public and private values in Vertex class</cmt>
+    class Edge;
+    class Face;
+    class Halfedge;
+
+    std::optional<FaceRef> bevel_vertex(VertexRef v);
+    std::optional<FaceRef> bevel_edge(EdgeRef e);
+    std::optional<FaceRef> bevel_face(FaceRef f);
+}
+        </pre>
+        <div class=file>halfedge.h</div>
+
+        Now in our <val>Halfedge_Mesh</val> class, we can write functions that access these private values from the <val>Vertex</val> class.
+
+        <pre>
+std::optional &ltHalfedge_Mesh::FaceRef&gt Halfedge_Mesh::bevel_vertex(Halfedge_Mesh::VertexRef v) {
+    v->pos = Vec3(1.f,0.f,0.f);      <cmt>// works: public variable</cmt>
+    v->new_pos = Vec3(1.f,0.f,0.f);  <cmt>// works: Halfedge_Mesh functions have access to Vertex private variables</cmt>
+}
+        </pre>
+        <div class=file>meshedit.cpp</div>
+
+        We chose to make variables in classes <val>private</val> in order to ensure classes that we don't want modifying these variables will never have access to it. This way, you can control who has access to what parameters and prevent accidental overwriting of variables.
+    
+    </p>
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=templates>Templates</div>
+    <p>
+        Templates help define a generic type that you can use to write versitile code without explicitly defining the interface for each type. Your compiler writes the template code only if it is called, otherwise the compiler avoids it. Templating can be thought of as getting the compiler to write your code.<br><br>
+
+        Say we'd like to create a new set of classes that will track query usage per element to help for analytics. Our classes would look something like this.
+
+        <pre>
+class Cache {
+public:
+    Cache(int N) {
+        data = calloc(N, sizeof(datatype));
+        freq = calloc(N, sizeof(int));
+        size = N;
+    }
+    datatype get(int idx) {
+        freq[idx]++;
+        return data[idx];
+    }
+private:
+    datatype *data;
+    int *freq;
+    int size;
+}
+        </pre>
+        <div class=file></div>
+
+        We would like <val>datatype</val> to be an int, float, and double. Doing so would lead us to write the following classes.
+
+        <pre>
+class CacheInt {
+public:
+    CacheInt(int N) {
+        data = calloc(N, sizeof(int));
+        freq = calloc(N, sizeof(int));
+        size = N;
+    }
+    int get(int idx) {
+        freq[idx]++;
+        return data[idx];
+    }
+private:
+    int *data;
+    int *freq;
+    int size;
+}
+
+class CacheFloat {
+public:
+    CacheFloat(int N) {
+        data = calloc(N, sizeof(float));
+        freq = calloc(N, sizeof(int));
+        size = N;
+    }
+    float get(int idx) {
+        freq[idx]++;
+        return data[idx];
+    }
+private:
+    float *data;
+    int *freq;
+    int size;
+}
+
+class CacheDouble {
+public:
+    CacheDouble(int N) {
+        data = calloc(N, sizeof(double));
+        freq = calloc(N, sizeof(int));
+        size = N;
+    }
+    double get(int idx) {
+        freq[idx]++;
+        return data[idx];
+    }
+private:
+    double *data;
+    int *freq;
+    int size;
+}
+        </pre>
+        <div class=file></div>
+
+        A lot of code to write isn't it? If only there were some way to write a template for what our class would look like and sub in the correspondng datatype. Oh wait, there is! We can use templates to create a generic datatype and bind it on compile time.
+
+        <pre>
+template&lttypename T&gt
+class Cache {
+public:
+    Cache(int N) {
+        data = calloc(N, sizeof(T));
+        freq = calloc(N, sizeof(int));
+        size = N;
+    }
+    T get(int idx) {
+        freq[idx]++;
+        return data[idx];
+    }
+private:
+    T *data;
+    int *freq;
+    int size;
+}
+        </pre>
+        <div class=file></div>
+
+        Then we can create instances of int, float and double caches easily.
+
+        <pre>
+Cache&ltint&gt a = Cache&ltint&gt(10);
+Cache&ltfloat&gt b = Cache&ltfloat&gt(10);
+Cache&ltdouble&gt c = Cache&ltdouble&gt(10);
+        </pre>
+        <div class=file></div>
+
+        The best way to think about this is that everytime we create a new template datatype for the <val>Cache</val> class, it makes a copy of the string defining the class and swaps out every instance of the typename <val>T</val> before inserting it into the file and compiling it. If we never make a call to <val>Cache</val> with any datatype, then the template is ignored and we never compile it (yet another optimization on the compiler's part!)<br><br>
+
+        We use templates a lot in Scotty3D, and you'll even work to implement some template classes in the Animation unit. An example class is shown below.
+
+        <pre>
+template&lttypename T&gt
+class Spline {
+public:
+
+    T at(float time) const;
+
+    void set(float time, T value) { control_points[time] = value; }
+    void erase(float time) { control_points.erase(time); }
+    bool has(float t) const { return control_points.count(t); }
+    bool any() const { return !control_points.empty(); }
+    void clear() { control_points.clear(); }
+
+private:
+    std::map&ltfloat, T&gt control_points; <cmt>// records keyframe values at specific times</cmt>
+};
+        </pre>
+        <div class=file>spline.h</div>
+
+        Here we define a <val>Spline</val> class that can be assigned a type at compiletime. The program will then copy the above strng of code, replacing typename <val>T</val> with the includede type, making a strong-typed class interface for the type. Lets go ahead and create an instance of this class with a specific type.
+
+        <pre>
+Spline&ltint&gt S;
+S.add(0.f, 0);
+S.add(1.f, 61848);
+printf("%d\n", S.at(0.25)) <cmt>// prints 15462</cmt>
+        </pre>
+        <div class=file></div>
+
+        Many other library classes and data structures also use templates to exploit generic types. C++ classes like the ones below use templates to avoid redundant coding.
+
+        <pre>
+std::map&ltT1, T2&gt A;            <cmt>// list of key-value pairs</cmt>
+std::unordered_map&ltT1, T2&gt B;  <cmt>// unordered list of key-value pairs</cmt>
+std::set&ltT&gt C;                 <cmt>// list without duplicates</cmt>
+std::unordered_set&ltT&gt D;       <cmt>// unordered list without duplicates</cmt>
+std::list&ltT&gt E;                <cmt>// dumb list </cmt>
+std::vector&ltT&gt F;              <cmt>// fancy list </cmt>
+std::deque&ltT&gt G;               <cmt>// list with multi-side insertion/deletion </cmt>
+std::pair&ltT1, T2&gt H;           <cmt>// two-element list </cmt>
+        </pre>
+        <div class=file></div>
+
+    </p>
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=iterators>Iterators</div>
+    <p>
+
+        Iterators allow you it iterate through ordered and unordered structs (like <val>sets</val> and <val>unordered_maps</val>) using the <val>::iterator</val> attribute. Say we are given a list of vertices and would like to iterate through each vertex and update the contents. Our normal approach in C would be to determine the number of vertices in the list and use a for loop with indexing to query for each vertex and update its properties. We can instead use iterators in our for loop to simplify the code and speed up the process.
+
+        <pre>
+HalfedgeMesh& mesh;
+for(VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++) {
+    v->position = v->newPosition;
+}
+        </pre>
+        <div class=file></div>
+
+        The class and type specs are defined below.
+
+        <pre>
+class HalfedgeMesh {
+public:
+    list&ltVertex&gt vertices;
+    ...
+    typedef list&ltVertex&gt::iterator VertexIter;
+    ...
+    VertexIter verticesBegin() { return vertices.begin(); }
+    VertexIter verticesEnd() { return vertices.end(); }
+    ...
+};
+        </pre>
+        <div class=file>HalfEdgeMesh.h</div>
+
+        We can see that <val>mesh.vertices</val> holds a list of <val>Vertex</val> objects. <val>vertices.begin()</val> returns the first iterator in our list, and we increment that until we reach the last iterator <val>vertices.end()</val> (non-inclusive). We typedef <val>list&ltVertex&gt::iterator</val> as <val>VertexIter</val> for easy notation, although it is common to use <val>auto</val> in this case too.<br><br>
+
+        An easy way to think about iterators are as pointers. In the above code, we can iterate through our vector of ints and dereference the iterator we are on to get the value it points to. By incrementing our iterator, we are jumping <val>sizeof(datatype)</val> bytes in memory to get a pointer to the next value.
+
+        <pre>
+vector&ltint&gt a = { 1, 5, 4, 6, 2 }; 
+printf("I love ");
+for(vector&ltint&gt::iterator ptr = a.begin(); ptr != a.end(); ptr++) {
+    printf("%d", *ptr);
+}
+        </pre>
+        <div class=file></div>
+
+        
+
+
+    </p>
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=auto>Auto</div>
+    <p>
+
+    Sometimes (especially in graphics) datatypes in C++ can be very long. A good programmer will recognize when a dataype should be obvious and instead will alias the original datatype using the <val>auto</val> keyword. Consider the following example.
+
+    <pre>
+const std::vector&ltMesh::Index&gt& Mesh::indices() const {
+    return _idxs;
+}
+
+Mesh& mesh;
+const std::vector&ltMesh::Index&gt& idx = mesh.indices();
+    </pre>
+    <div class=file>tri_mesh.cpp</div>
+
+    We could normally declare an idx variable to hold the results of mesh.indices() using the long datatype name, or we could use the <val>auto</val> keyword.
+
+    <pre>
+const auto& idx = mesh.indices();
+    </pre>
+    <div class=file>tri_mesh.cpp</div>
+
+    See, doesn't that look nicer?
+
+    </p>
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=const>Const</div>
+    <p>
+
+    Const prevents us from modifying the state of an object or variable. We can define a variable as const such that we cannot update it, or we can define a function in a class as const such that we cannot modify any of the properties of that class. This helps optimize our code (telling the compiler that we don't need write access to the variable) and also helps create safer code by ensuring class variables won't be overwritten.<br><br>
+
+    The following function starts by reading the <val>_halfedge</val> of the <val>Face</val> class and iterates through each halfedge to get the degree of the face. During the process we only read from but do not write to any class values.
+
+    <pre>
+unsigned int Halfedge_Mesh::Face::degree() const {
+    unsigned int d = 0;
+    HalfedgeCRef h = _halfedge;
+    do {
+        d++;
+        h = h->next();
+    } while (h != _halfedge);
+    return d;
+}
+    </pre>
+    <div class=file>halfedge.cpp</div>
+
+    But wait! what's <val>HalfedgeCRef</val>??
+
+    <pre>
+using HalfedgeCRef = std::list&ltHalfedge&gt::const_iterator;
+    </pre>
+    <div class=file>halfedge.h</div>
+
+    Aha! It's a <val>const_iterator</val>! But wait! how are we able to update <val>h</val> if it's a <val>const_iterator</val>? Let's look at a quick example.<br><br>
+
+    We normally define an int pointer as <val>int *ptr</val> and can put the const symbol before the int datatype (<val>const int *ptr</val>) or after it (<val>int const *ptr</val>). As we will see, these have very different effects on the pointer.
+
+    <pre>
+int valA = 15462;
+int valB = 15418;
+
+int *a = &valA; <cmt>// normal int pointer</cmt>
+a = &valB;      <cmt>// success! we can modify what a points too</cmt>
+*a = 15213;     <cmt>// success! we can modify the value at the adress a points to</cmt>
+
+const int *b = &valA; <cmt>// pointer to const int</cmt>
+b = &valB;            <cmt>// success! we can modify what b points too</cmt>
+*b = 15213;           <cmt>// fails: can't change value of const int</cmt>
+
+int const *c = &valA; <cmt>// const pointer to int</cmt>
+c = &valB;            <cmt>// fails: can't change pointer</cmt>
+*c = 15213;           <cmt>// success! we can modify the value at the adress c points to</cmt>
+
+const int const *d = &valA; <cmt>// const pointer to a const int</cmt>
+d = &valB;                  <cmt>// fails: can't change pointer</cmt>
+*d = 15213;                 <cmt>// fails: can't change value of const int</cmt>
+
+    </pre>
+    <div class=file></div>
+
+    We see here that where we place the <val>const</val> keyword matters as to whether we can change the adress of the pointer or the value at the location of the pointer. So in our previous case with <val>HalfedgeCRef</val>, since it is a <val>const_iterator</val>, that means that it is an iterator to a const value in the list. Thus, we can change the adress that <val>h</val> points to, and we never end up changing the actual values in the halfedge list. This is good since it will prevent us from accidentally changing values in the halfedge lists, giving us read-only access to the data in order to compute the degree of the face via halfedge traversal.
+
+    </p>
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=static>Static</div>
+    <p>
+
+    The <val>static</val> keyword can be used in different contexts to mean different things. In general, we use <val>static</val> to help define that a resource is shared/acessible in a larger scope than it actually is. Inside of a class, we can define both functions and variables as <val>static</val>. Below we have the <val>Mat4</val> class, which stores data and operations for a 4x4 Matrix.
+    
+    <pre>
+struct Mat4 {
+
+    static const Mat4 I;
+    static const Mat4 Zero;
+
+    static Mat4 transpose(const Mat4& m);
+    static Mat4 inverse(const Mat4& m);
+    static Mat4 translate(Vec3 t);
+    static Mat4 rotate(float t, Vec3 axis);
+    static Mat4 euler(Vec3 angles);
+    static Mat4 rotate_to(Vec3 dir);
+    static Mat4 rotate_z_to(Vec3 dir);
+    static Mat4 scale(Vec3 s);
+    static Mat4 axes(Vec3 x, Vec3 y, Vec3 z);
+    ...
+}
+    </pre>
+    <div class=file>mat4.h</div>
+
+    Static variables are shared among all copies of object instances. In this case, regardless of how many <val>Mat4</val> objects we create, they will always share the same <val>I</val> (identity) and <val>Zero</val> (zero matrix) values.<br><br>
+
+    A program can also define the static variables and call functions without ever needing to create an instance. It does so by defining <val>I</val> and <val>Zero</val> as globally acessible parameters under the <val>Mat4</val> struct namespace.
+
+    <pre>
+const inline Mat4 Mat4::I = Mat4{Vec4{1.0f, 0.0f, 0.0f, 0.0f}, 
+                Vec4{0.0f, 1.0f, 0.0f, 0.0f},
+                Vec4{0.0f, 0.0f, 1.0f, 0.0f},
+                Vec4{0.0f, 0.0f, 0.0f, 1.0f}};
+const inline Mat4 Mat4::Zero = Mat4{Vec4{0.0f, 0.0f, 0.0f, 0.0f}, 
+                Vec4{0.0f, 0.0f, 0.0f, 0.0f},
+                Vec4{0.0f, 0.0f, 0.0f, 0.0f},
+                Vec4{0.0f, 0.0f, 0.0f, 0.0f}};
+    </pre>
+    <div class=file>mat4.h</div>
+
+    Here, we declare <val>I</val> as a <val>const inline Mat4 Mat4::I</val> that takes no arguments and returns a <val>const Mat4</val> when calling <val>Mat4::I</val>. Though once we define a static value, we cannot redefine it (thus making it constant). We can also call other <val>Mat4</val> functions without creating an instance of the class by reference the <val>Mat4::</val> classname before calling the class function.
+
+
+    <pre>
+Vec3 t = Vec3(1.f,2.f,3.f);
+Mat4 m = Mat4::axes(t,t,t); <cmt>// calling a Mat4 static function without using an instance to call it</cmt>
+    </pre>
+    <div class=file></div>
+
+    Another instance of static variables (although not as commonly used) is declaring static global variables. The effect of this is to limit the scope of the variable to the current file only. For example, say we have the following two files.
+
+    <pre>
+------------ main.cpp ------------ 
+#include "library.h"
+int numCores = 8;
+------------ library.h ------------ 
+int numCores = 1;
+    </pre>
+    <div class=file></div>
+
+    Your compiler will give you a warning when linking <val>library.h</val> that <val>numCores</val> has been redefined. To resolve this issue, we can use the <val>static</val> keyword to bind the variables to a file-only scope.
+
+        <pre>
+------------ main.cpp ------------ 
+#include "library.h"
+int numCores = 8;
+------------ library.h ------------ 
+static int numCores = 1;
+    </pre>
+    <div class=file></div>
+
+    Now when the compiler goes to link <val>library.h</val>, it doesn't let <val>main.cpp</val> know that <val>numCores</val> was defined, and main is free to define it without error.
+
+    </p>
+
+    </div>
+
+    <div class=block>
+
+
+    <div class=subtitle id=namespace>Namespace</div>
+    <p>
+
+    Namespaces help us encapsulate data and types into a group for easier referencing. It can also help us avoid conflicts if we have variables and functions of the same name. In Scotty3D we use namespaces to group together different pieces of the graphics pipeline. For example, one namespace you will be seeing a lot in A3 is <val>PT</val> (PathTracer).
+
+    <pre>
+namespace PT {
+    class Tri_Mesh {
+    public:
+        Tri_Mesh() = default;
+        Tri_Mesh(const GL::Mesh& mesh);
+
+        BBox bbox() const;
+        Trace hit(const Ray& ray) const;
+
+        size_t visualize(GL::Lines& lines, GL::Lines& active, size_t level, const Mat4& trans) const;
+
+        void build(const GL::Mesh& mesh);
+
+    private:
+        std::vector&ltTri_Mesh_Vert&gt verts;
+        BVH&ltTriangle&gt triangles;
+    };
+}
+    </pre>
+    <div class=file>tri_mesh.h</div>
+
+    Here, we've enclosed the <val>Tri_Mesh</val> class in the namespace <val>PT</val>. If we'd like to reference an instance of this class, we can do so using the <val>::</val> format.
+
+    <pre>
+class Rig {
+...
+private:
+    ...
+    PT::Tri_Mesh mesh_bvh; <cmt>// Tri_Mesh is defined in PT namespace</cmt>
+};
+    </pre>
+    <div class=file>rig.h</div>
+
+    We can also un-enclose namespaces if the name is too long and/or we know we will be using objects from that namespace a lot in a given file. You're probably familiar with the following code.
+
+<pre>
+using namespace std;
+vector&ltint&gt a;
+    </pre>
+    <div class=file></div>
+
+    Normally we declare a vector as <val>std::vector&ltT&gt</val>, but by <val>using namespace std</val>, we've defined a search-space where any unrecognized symbols are matched against our <val>std</val> keyword to see if they can be resolved. We can apply the same idea to our <val>PT</val> namespace.
+
+    <pre>
+using namespace PT;
+class Rig {
+...
+private:
+    ...
+    Tri_Mesh mesh_bvh; <cmt>// access Tri_Mesh without PT</cmt>
+};
+    </pre>
+    <div class=file>rig.h</div>
+    </p>
+
+    </div>
+
+    <div class=block>
+
+
+    <div class=subtitle id=virtual>Virtual</div>
+
+    <p>
+    Virtual functions allow the program to call a function from a derived class using a base-class pointer of a derived class object. Does that not make sense? Good. It shouldn't have.<br><br>
+
+    Here's a simple example: Say I have two classes <val>A</val> and <val>B</val>. <val>B</val> is publically derived from <val>A</val>, alongside sharing some simmilar function names.
+
+    <pre>
+class A {   
+    virtual void undo() {...};
+    void redo() {...};
+};
+class B : public A {    
+    void undo() {...};
+    void redo() {...};
+};
+    </pre>
+    <div class=file></div>
+
+    Now I define a stack-allocated instance of class <val>B</val>, and cast it to an instance of class <val>A</val> when creating a pointer to <val>A</val>.
+
+     <pre>
+B b;
+A *a = &b;
+a->undo() <cmt>// which undo do I call?</cmt>
+a->redo() <cmt>// which redo do I call?</cmt>
+    </pre>
+    <div class=file></div>
+
+    Now here's the question: which version of each function do I call? Since <val>a</val> is a pointer to <val>A</val> but is holding the value of a <val>B</val> object, things can get confusing pretty easily. Luckily, the course of action is straightforward: we first look in the base class. If the function is virtual, we look in the derived class. 
+
+    <pre>
+class A {   
+    virtual void undo() {...}; <cmt>// virtual tells us to go to the derived class</cmt>
+    void redo() {...}; <cmt>// program doesn't know of another existance and runs this instance</cmt>
+};
+class B : public A {    
+    void undo() {...}; <cmt>// program runs this version</cmt>
+    void redo() {...}; <cmt>// program doesn't run this version</cmt>
+};
+    </pre>
+    <div class=file></div>
+
+    Thus, we know that <val>a->undo</val> calls the derived instance and <val>a->redo</val> calls the base instance. Defining virtual functions is a handy tool for runtime polymorphism where we want to override a base functon definition in a derived class. We can also define virtual functions in base classes as templates for derived classes.
+
+    <pre>
+class Action_Base {
+    virtual void undo() = 0;
+    virtual void redo() = 0;
+    friend class Undo;
+public:
+    virtual ~Action_Base() = default;
+};
+    </pre>
+    <div class=file>undo.h</div>
+
+    The <val>Action_Base</val> class provides us a template for our <val>MeshOp</val> class.
+
+    <pre>
+class MeshOp : public Action_Base {
+    void undo() {
+        Scene_Object& obj = scene.get_obj(id);
+        obj.set_mesh(mesh);
+    }
+    void redo() {
+        Scene_Object& obj = scene.get_obj(id);
+        auto sel = obj.set_mesh(mesh, eid);
+        op(obj.get_mesh(), sel);
+}
+    </pre>
+    <div class=file>undo.h</div>
+
+    </p>
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=datatypes>Datatypes</div>
+    <p>
+
+    C++ comes with many handy datatypes used for storing and parsing data. Each datatype is implemented in a different fashion, and choosing the correct datatype depends on the task (what kinds of data access patterns you will have). Below we've listed some common types.
+
+    <pre>
+        std::vector<T> v;  <cmt>// continuous memory layout</cmt>
+        std::list<T> v;    <cmt>// doubly-linked list</cmt>
+    </pre>
+    <div class=file></div>
+
+    The <val>vector</val> class is one of the most common classes in C++ meant to handle random-acccess iterators well. Vectors elements are always held in order, meaning that insertions at the end of the list is O(1) but insertions in the middle of the list are O(n) since we need to shift elements over. The amortized insertion cost is O(1). Some special functions include:
+
+    <pre>
+#include &ltvector&gt         
+vector&ltint&gt a(50);                  <cmt>// create int vector of size 50</cmt>  
+vector&ltint&gt b(10, 15462);           <cmt>// create int vector of size 10 with all elements as 15462</cmt>      
+a.size();                           <cmt>// returns 50</cmt>
+a.push_back(15462);                 <cmt>// adds 15462 to back of list</cmt>
+a.pop_back();                       <cmt>// removes last element</cmt>
+vector&ltint&gt::iterator p = a.begin() <cmt>// get iterator to first element</cmt>
+while(p < a.end()) {                <cmt>// get iterator to last element</cmt>
+(void)a[p];                         <cmt>// supports random access patterns well (contiguous memory layout)</cmt>           
+p += randint(0,5); }                
+    </pre>
+    <div class=file></div>
+    
+    </p>
+
+
+    </div>
+
+
+    <div class=block>
+
+    <div class=subtitle id=allocating>Allocating/Freeing</div>
+    <p>
+
+    Below we have an example of the <val>Joint</val> class which is used for storing joint rotation info along our skeleton. Each joint stores an <val>std::unordered_set&ltJoint*&gt</val> of all the joint's children. When a Joint is deleted, the deconstructor <val>~Joint()</val> iterates through each child joint and deletes it (think of it as burning the bridge in a linked-list structure).
+
+    <pre>
+class Joint {
+public:
+    Joint(unsigned int id) : _id(id) {}
+    Joint(unsigned int id, Joint* parent, Vec3 extent) : _id(id), parent(parent), extent(extent) {}
+    ~Joint() { for(Joint* j : children) delete j; }
+    ...
+private:
+    std::unordered_set&ltJoint*&gt children;
+    ...
+    friend class Skeleton;
+    friend class Scene;
+};
+    </pre>
+    <div class=file>skeleton.h</div>
+
+    When we go to add a child joint to our skeleton, we call the <val>Joint(unsigned int id, Joint* parent, Vec3 extent)</val> constructur using the <val>new</val> keyword.
+
+    <pre>
+Joint* Skeleton::add_child(Joint* j, Vec3 e) {
+    Joint* c = new Joint(next_id++, j, e); <cmt>// use the new keyword when allocating</cmt>
+    for(float f : keys()) {
+        c->anim.set(f, Quat{});
+    }
+    j->children.insert(c);
+    return c;
+}
+    </pre>
+    <div class=file>skeleton.cpp</div>
+
+   When we want to delete our joint in our implementation, we can add the joint to an <val>erased</val> list.
+
+    <pre>
+void Skeleton::erase(Joint* j) {
+    if(j->parent) {
+        j->parent->children.erase(j);
+    } else {
+        roots.erase(j);
+    }
+    erased.insert(j);
+}
+    </pre>
+    <div class=file>skeleton.cpp</div>
+
+    Then when we call <val>delete</val> on our Skeleton object, we iterate over the joints from both the <val>roots</val> and <val>erased</val> lists and delete the joints.
+
+    <pre>
+Skeleton::~Skeleton() { 
+    for(Joint* j : roots) delete j; 
+    for(Joint* j : erased) delete j;
+}
+    </pre>
+    <div class=file>skeleton.cpp</div>
+
+    And just like that, our deconstructor deletes both the reference to the Skeleton object and any other objects that it held.
+
+
+    </p>
+
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=references>References</div>
+    <p>
+
+    You're probably familiar with the idea of pass-by-reference and pass-by-value. Pass-by-value creates a copy of the variable so that any modifications to the variable are binded to a local-scope of that function alone. Pass-by-reference gets the adress of the variable in memory, allowing the function to modify the variable such that the modification will be present even after the function returns.
+
+    <pre>
+bool hit(Line line, Vec3& pt) const {
+    Vec3 n = p.xyz();
+    float t = (p.w - dot(line.point, n)) / dot(line.dir, n);
+    pt = line.at(t);
+    return t >= 0.0f;
+}
+    </pre>
+    <div class=file>plane.h</div>
+
+    In <val>hit()</val> we pass in <val>Line line</val> as a value and <val>Vec3& pt</val> as a reference. <val>line</val> is a copy, and so any modifications made to it will be local in scope to the function, whereas <val>Vec3& pt</val> is passed as reference, and any modifications made to it will be saved. This is particularly useful when we not only want to return true if our line hits the plane, but we would also want to store the resulting hit location in <val>pt</val>. Using this layout, we can get multiple pieces of information using references.<br><br>
+
+    References look very simmilar to pointers, so why not just use pointers? Lets take a look at some cases where they differ.
+
+    <pre>
+int val = 15462;
+int *a = &val; <cmt>// works!</cmt>
+int &b = &val; <cmt>// works!</cmt>
+
+int val2 = 15418;
+a = &val2; <cmt>// works!</cmt>
+b = &val2; <cmt>// fails! can't reassign refs</cmt>
+
+*a = val2; <cmt>// works!</cmt>
+b = val2;  <cmt>// works! wait what?</cmt>
+    </pre>
+    <div class=file></div>
+
+    So we can't reassign references. Why's that? That's because references are a const alias for an already existing variable. We let reference <val>b</val> point to the same memory location as <val>val</val>, but we're not allowed to change what <val>b</val> points to. So then why does assigning <val>val2</val> to <val>b</val> work? That's because we are overwriting the value stored at <val>b</val>, not what it points to (same behavior as a const pointer). Yet since <val>b</val> is a reference to <val>val</val> still, that means we've overwritten the contents of <val>val</val> to <val>val2</val>.<br><br>
+
+    We can declare functions that automatically cast variables to ref on input and return.
+
+    <pre>
+class Vertex {
+public:
+    HalfedgeRef& halfedge() {return _halfedge;}
+    ...
+private:
+    ...
+    HalfedgeRef _halfedge;
+};
+    </pre>
+    <div class=file>halfedge.h</div>
+
+    Here we return <val>_halfedge</val> as a <val>HalfedgeRef&</val> despite the original value being a non-ref. This does not mean that the variable accepting the return must also be a reference
+
+    <pre>
+float totalArea = 0.0f;
+HalfEdgeRef h = vert->halfedge(); <cmt>// HalfedgeRef type accepts HalfedgeRef&</cmt>
+do {
+  if(!h->face()->is_boundary()) {
+    totalArea += h->face()->area();
+  }
+  h = h->twin()->next(); <cmt>// because it isn't a ref, we can keep updating it</cmt>
+}
+while(h != vert->halfedge());
+    </pre>
+    <div class=file>halfedge.h</div>
+
+    So then why bother returning a ref? Sometimes we just want reassurance that we're always returning a reference to the same vertex halfedge in our call to <val>vert->halfedge()</val>.
+
+    </p>
+
+
+    </div>
+
+    <div class=block>
+
+    <div class=subtitle id=goodluck>Good Luck!</div>
+    <p>
+
+    Did anyone ever tell you what OpenGL stands for?<br><br>
+
+    Open Grapics Library?<br>
+    Open GPU Lists?<br>
+    Open Generative Language?<br><br>
+
+    None of the above! OpenGL stands for Open Good Luck! That's because despite how hard graphics can be, and how frustrated you might get, you're never alone. We're all here to support you in the graphics community. So take a chance, have fun, and get your hands dirty with some graphics code.<br><br>
+
+    We can't wait to see the things you'll go on to create :)<br>
+    - 15462 TAs.
+
+
+    </p>
+
+
+    </div>
+
+</body>
+</html>
